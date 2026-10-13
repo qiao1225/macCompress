@@ -16,6 +16,7 @@ xcuserdata/
 # Application Bundles & Temporary output
 macCompress.app/
 *.dmg
+*.zip
 dist/
 icon_output/
 AppIcon.iconset/
