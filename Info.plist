@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>macCompress</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.antigravity.macCompress</string>
+    <key>CFBundleName</key>
+    <string>macCompress</string>
+    <key>CFBundleDisplayName</key>
+    <string>macCompress</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026. All rights reserved.</string>
+    
+    <!-- 注册支持的文件类型：支持拖拽到 Dock 图标打开任意文件/文件夹/归档 -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>All Files and Folders</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.item</string>
+                <string>public.data</string>
+                <string>public.folder</string>
+                <string>public.archive</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- 注册自定义 URL Scheme (maccompress://) 用于访达右键与快捷指令集成 -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>CFBundleURLName</key>
+            <string>com.antigravity.macCompress.url</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>maccompress</string>
+            </array>
+        </dict>
+    </array>
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>

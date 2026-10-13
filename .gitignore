@@ -1,0 +1,21 @@
+# Xcode & Swift
+.build/
+.swiftpm/
+DerivedData/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+
+# macOS
+.DS_Store
+*.swp
+*~
+.Spotlight-V100
+.Trashes
+
+# Application Bundles & Temporary output
+macCompress.app/
+*.dmg
+dist/
+icon_output/
+AppIcon.iconset/
