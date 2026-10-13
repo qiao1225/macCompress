@@ -7,6 +7,7 @@
 
 import AppKit
 import Foundation
+import SwiftUI
 
 public final class MainWindowDelegate: NSObject, NSWindowDelegate {
     public func windowShouldClose(_ sender: NSWindow) -> Bool {
@@ -27,10 +28,19 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         AppDelegate.shared = self
     }
 
-    /// 绑定并接管主窗口生命周期代理
+    /// 绑定并接管主窗口生命周期代理与现代沉浸式视觉配置
     public func configureMainWindow(_ window: NSWindow) {
         self.mainWindow = window
         window.delegate = windowDelegate
+
+        // 彻底消除突兀灰色系统标题栏，实现与 Marvis 主题完全吻合的沉浸式无缝体验
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.styleMask.insert(.fullSizeContentView)
+        window.isMovableByWindowBackground = true
+
+        // 统一窗口底色与主题 Token 一致
+        window.backgroundColor = NSColor(Color.appBackground)
     }
 
     /// 响应用户把文件拖拽到 Dock 图标上，或者在访达中双击关联文件

@@ -2,159 +2,166 @@
 //  ExecutionStatusBarView.swift
 //  macCompress
 //
-//  职责：底部状态与动作条，统一承载任务执行进度、状态反馈信息、取消按钮与一键压缩/解压主触发按钮。
+//  职责：统一现代美学状态展示区，纯粹的【状态 + 进度】反馈，彻底移除分散的功能按钮。
 //
 
 import SwiftUI
 
 public struct ExecutionStatusBarView: View {
     @ObservedObject var viewModel: MainViewModel
+    @Environment(\.colorScheme) var colorScheme
 
     public var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 0) {
             Divider()
+                .overlay(Color.appBorderSubtle)
 
-            HStack(spacing: 14) {
-                // 左侧：状态或进度展示
-                VStack(alignment: .leading, spacing: 4) {
-                    switch viewModel.status {
-                    case .idle:
-                        Text(viewModel.activeTab == .compress ? "已准备就绪，配置完成后点击右侧开始压缩" : "已准备就绪，点击右侧开始解压")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+            HStack(spacing: 16) {
+                // 左侧：状态说明与语义指示灯
+                statusContent
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                    case .preparing(let desc):
-                        HStack(spacing: 6) {
-                            ProgressView()
-                                .controlSize(.small)
-                            Text(desc)
-                                .font(.system(size: 12))
-                                .foregroundColor(.primary)
-                        }
+                // 右侧：仅在运行状态下展示实时进度条与取消按钮
+                if case .running(let progress, _, _, _) = viewModel.status {
+                    HStack(spacing: 12) {
+                        ModernProgressBar(value: progress)
+                            .frame(width: 140, height: 6)
 
-                    case .running(let progress, let currentItem, _, _):
-                        VStack(alignment: .leading, spacing: 3) {
-                            HStack {
-                                Text("正在处理：\(currentItem)")
-                                    .font(.system(size: 11, weight: .medium))
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                                Spacer()
-                                Text("\(Int(progress * 100))%")
-                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.accentColor)
-                            }
+                        Text("\(Int(progress * 100))%")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundColor(ColorTokens.Purple.p400)
+                            .frame(width: 36, alignment: .trailing)
 
-                            ProgressView(value: progress)
-                                .progressViewStyle(.linear)
-                        }
-
-                    case .completed(_, let msg):
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("已完成: \(msg)")
-                                .font(.system(size: 12, weight: .medium))
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-
-                            Button("在访达中显示") {
-                                viewModel.revealLastOutputInFinder()
-                            }
-                            .buttonStyle(.link)
-                            .font(.system(size: 12))
-
-                            Button("清空重置") {
-                                viewModel.resetCurrentTab()
-                            }
-                            .buttonStyle(.borderless)
-                            .font(.system(size: 11))
-                            .foregroundColor(.accentColor)
-                        }
-
-                    case .failed(let msg):
-                        HStack(spacing: 6) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.red)
-                            Text("失败: \(msg)")
-                                .font(.system(size: 12))
-                                .foregroundColor(.red)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        }
-
-                    case .cancelled:
-                        HStack(spacing: 6) {
-                            Image(systemName: "slash.circle")
-                                .foregroundColor(.secondary)
-                            Text("操作已取消")
-                                .font(.system(size: 12))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-
-                Spacer()
-
-                // 右侧：取消按钮与执行主按钮
-                HStack(spacing: 10) {
-                    if viewModel.status.isBusy {
                         Button("取消") {
                             viewModel.cancelTask()
                         }
-                        .controlSize(.regular)
+                        .buttonStyle(SecondaryGhostButtonStyle(size: .small))
                     }
-
-                    if case .completed = viewModel.status {
-                        Button(action: {
-                            viewModel.resetCurrentTab()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "arrow.clockwise")
-                                Text("完成并开始新任务")
-                            }
-                            .font(.system(size: 13, weight: .semibold))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                    } else if viewModel.activeTab == .compress {
-                        Button(action: {
-                            viewModel.startCompress()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "archivebox.fill")
-                                Text("一键压缩")
-                            }
-                            .font(.system(size: 13, weight: .semibold))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .disabled(viewModel.items.isEmpty || viewModel.status.isBusy)
-                    } else {
-                        Button(action: {
-                            viewModel.startExtract()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "arrow.down.doc.fill")
-                                Text("一键解压")
-                            }
-                            .font(.system(size: 13, weight: .semibold))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .disabled(viewModel.archiveToExtract == nil || viewModel.status.isBusy)
+                } else if case .completed = viewModel.status {
+                    Button("在访达中定位") {
+                        viewModel.revealLastOutputInFinder()
                     }
+                    .font(.system(size: 11, weight: .semibold))
+                    .buttonStyle(.link)
+                    .foregroundColor(ColorTokens.Purple.p400)
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            .padding(.vertical, 8)
+            .background(Color.appSurface)
         }
-        .background(Color(NSColor.windowBackgroundColor))
+    }
+
+    // MARK: - 状态文案与语义指示
+
+    @ViewBuilder
+    private var statusContent: some View {
+        switch viewModel.status {
+        case .idle:
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(ColorTokens.Purple.p500.opacity(0.6))
+                    .frame(width: 6, height: 6)
+
+                Text(viewModel.activeTab == .compress
+                     ? (viewModel.items.isEmpty ? "就绪：拖入文件或点击上方按钮开始" : "已就绪 \(viewModel.items.count) 个项目，点击右侧面板立即压缩")
+                     : (viewModel.archiveToExtract == nil ? "就绪：拖入压缩包或点击上方按钮开始" : "已就绪归档包，点击下方按钮开始提取"))
+                    .font(.system(size: 11))
+                    .foregroundColor(Color.appTextSecondary)
+            }
+
+        case .preparing(let desc):
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text(desc)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Color.appTextPrimary)
+            }
+
+        case .running(_, let currentItem, _, _):
+            HStack(spacing: 8) {
+                ModernIconView(.compressing, size: .sm, style: .primaryGradient)
+                Text("正在处理：\(currentItem)")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Color.appTextPrimary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+        case .completed(_, let msg):
+            HStack(spacing: 8) {
+                HStack(spacing: 4) {
+                    ModernIconView(.statusSuccess, size: .sm, style: .semanticSuccess)
+                    Text("完成")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.appSuccessBg)
+                .foregroundColor(Color.appSuccess)
+                .cornerRadius(ThemeTokens.Radius.badge)
+
+                Text(msg)
+                    .font(.system(size: 11))
+                    .foregroundColor(Color.appTextPrimary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+        case .failed(let msg):
+            HStack(spacing: 8) {
+                HStack(spacing: 4) {
+                    ModernIconView(.statusError, size: .sm, style: .semanticError)
+                    Text("失败")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.appErrorBg)
+                .foregroundColor(Color.appError)
+                .cornerRadius(ThemeTokens.Radius.badge)
+
+                Text(msg)
+                    .font(.system(size: 11))
+                    .foregroundColor(Color.appError)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+        case .cancelled:
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(Color.appTextTertiary)
+                    .frame(width: 6, height: 6)
+
+                Text("任务已取消")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color.appTextTertiary)
+            }
+        }
+    }
+}
+
+// MARK: - 主色渐变平滑进度条
+
+private struct ModernProgressBar: View {
+    let value: Double
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(colorScheme == .dark ? ColorTokens.Purple.p900.opacity(0.4) : ColorTokens.Purple.p100)
+                    .frame(height: geometry.size.height)
+
+                Capsule()
+                    .fill(ColorTokens.Gradients.progressBar)
+                    .frame(width: max(0, min(CGFloat(value) * geometry.size.width, geometry.size.width)), height: geometry.size.height)
+                    .shadow(color: ColorTokens.Purple.p500.opacity(0.4), radius: 3, x: 0, y: 1)
+                    .animation(.easeInOut(duration: 0.2), value: value)
+            }
+        }
     }
 }
